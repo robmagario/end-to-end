@@ -52,6 +52,14 @@ export const NETWORKS = {
     faucet: "https://faucet.rinkeby.io/",
     blockExplorer: "https://rinkeby.etherscan.io/",
   },
+  testnet: {
+        name: "testnet",
+        color: "#e0d068",
+        chainId: 97,
+        rpcUrl: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+        faucet: "https://testnet.binance.org/faucet-smart",
+        blockExplorer: "https://bscscan.com/",
+      },
   ropsten: {
     name: "ropsten",
     color: "#F60D09",
