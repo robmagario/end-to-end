@@ -9,7 +9,7 @@ contract NFTMinter is ERC721 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    constructor(string memory tokenName, string memory symbol) ERC721(tokenName, symbol) {
+    constructor(string memory tokenName, string memory symbol) public ERC721(tokenName, symbol) {
         _setBaseURI("ipfs://");
     }
 

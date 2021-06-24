@@ -1,14 +1,15 @@
 import { StaticJsonRpcProvider, Web3Provider } from "@ethersproject/providers";
 import { formatEther, parseEther } from "@ethersproject/units";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { Alert, Button, Col, Menu, Row } from "antd";
+//import { Alert, Button, Col, Menu, Row } from "antd";
+import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
 import "antd/dist/antd.css";
 import { useUserAddress } from "eth-hooks";
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
-import { Account, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch } from "./components";
+import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch } from "./components";
 import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
 import {
@@ -22,12 +23,35 @@ import {
   useOnBlock,
   useUserProvider,
 } from "./hooks";
+//import ReactJson from "react-json-view";
+
+const { BufferList } = require("bl");
+// https://www.npmjs.com/package/ipfs-http-client
+const ipfsAPI = require("ipfs-http-client");
+
+//const { config, ethers } = require("hardhat");
+
+const ipfs = ipfsAPI({ host: "ipfs.infura.io", port: "5001", protocol: "https" });
 
 /// 📡 What chain are your contracts deployed to?
 const targetNetwork = NETWORKS.testnet; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
+
+//add
+const getFromIPFS = async hashToGet => {
+  for await (const file of ipfs.get(hashToGet)) {
+    console.log(file.path);
+    if (!file.content) continue;
+    const content = new BufferList();
+    for await (const chunk of file.content) {
+      content.append(chunk);
+    }
+    console.log(content);
+    return content;
+  }
+};
 
 // 🛰 providers
 if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
@@ -110,6 +134,48 @@ function App(props) {
   // If you want to make 🔐 write transactions to your contracts, use the userProvider:
   const writeContracts = useContractLoader(userProvider);
 
+
+//add
+const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [address]);
+  console.log("🤗 balance:", balance);
+
+  const transferEvents = useEventListener(readContracts, "NFTMinter", "Transfer", localProvider, 1);
+    console.log("📟 Transfer events:", transferEvents);
+
+    const yourBalance = balance && balance.toNumber && balance.toNumber();
+      const [yourCollectibles, setYourCollectibles] = useState();
+
+      useEffect(() => {
+        const updateYourCollectibles = async () => {
+          const collectibleUpdate = [];
+          for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
+            try {
+              console.log("GEtting token index", tokenIndex);
+              const tokenId = await readContracts.NFTMinter.tokenOfOwnerByIndex(address, tokenIndex);
+              console.log("tokenId", tokenId);
+              const metadataURI = await readContracts.NFTMinter.metadataURI(tokenId);
+              console.log("tokenURI", metadataURI);
+
+              const ipfsHash = metadataURI.replace("ipfs://", "");
+              console.log("ipfsHash", ipfsHash);
+
+              const jsonManifestBuffer = await getFromIPFS(ipfsHash);
+
+              try {
+                const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
+                console.log("jsonManifest", jsonManifest);
+                collectibleUpdate.push({ id: tokenId, uri: metadataURI, owner: address, ...jsonManifest });
+              } catch (e) {
+                console.log(e);
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          }
+          setYourCollectibles(collectibleUpdate);
+        };
+        updateYourCollectibles();
+      }, [address, yourBalance]);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -233,6 +299,8 @@ function App(props) {
     );
   }
 
+  const [transferToAddresses, setTransferToAddresses] = useState({});
+
   return (
     <div className="App">
       <Header />
@@ -240,15 +308,35 @@ function App(props) {
       <BrowserRouter>
         <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
         <Menu.Item key="/">
+                    <Link
+                      onClick={() => {
+                        setRoute("/");
+                      }}
+                      to="/"
+                    >
+                      YourCollectibles
+                    </Link>
+                  </Menu.Item>
+        <Menu.Item key="/Minter">
             <Link
               onClick={() => {
-                setRoute("/");
+                setRoute("/Minter");
               }}
-              to="/"
+              to="/Minter"
             >
               Mint an NFT
             </Link>
           </Menu.Item>
+          <Menu.Item key="/transfers">
+                      <Link
+                        onClick={() => {
+                          setRoute("/transfers");
+                        }}
+                        to="/transfers"
+                      >
+                        Transfers
+                      </Link>
+                    </Menu.Item>
           <Menu.Item key="/view">
             <Link
               onClick={() => { setRoute("/view"); }}
@@ -268,13 +356,87 @@ function App(props) {
 
         <Switch>
           <Route exact path="/">
-          <Minter
+          <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+                        <List
+                          bordered
+                          dataSource={yourCollectibles}
+                          renderItem={item => {
+                            const id = item.id.toNumber();
+                            return (
+                              <List.Item key={id + "_" + item.uri + "_" + item.owner}>
+                                <Card
+                                  title={
+                                    <div>
+                                      <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                                    </div>
+                                  }
+                                >
+                                  <div>
+                                    <img src={item.image} style={{ maxWidth: 150 }} />
+                                  </div>
+                                  <div>{item.description}</div>
+                                </Card>
+
+                                <div>
+                                  owner:{" "}
+                                  <Address
+                                    address={item.owner}
+                                    ensProvider={mainnetProvider}
+                                    blockExplorer={blockExplorer}
+                                    fontSize={16}
+                                  />
+                                  <AddressInput
+                                    ensProvider={mainnetProvider}
+                                    placeholder="transfer to address"
+                                    value={transferToAddresses[id]}
+                                    onChange={newValue => {
+                                      const update = {};
+                                      update[id] = newValue;
+                                      setTransferToAddresses({ ...transferToAddresses, ...update });
+                                    }}
+                                  />
+                                  <Button
+                                    onClick={() => {
+                                      console.log("writeContracts", writeContracts);
+                                      tx(writeContracts.NFTMinter.transferFrom(address, transferToAddresses[id], id));
+                                    }}
+                                  >
+                                    Transfer
+                                  </Button>
+                                </div>
+                              </List.Item>
+                            );
+                          }}
+                        />
+                      </div>
+                    </Route>
+
+          <Route path="/Minter">
+            <Minter
               signer={userProvider.getSigner()}
               provider={localProvider}
               address={address}
               blockExplorer={blockExplorer}
-            />
+              />
           </Route>
+
+          <Route path="/transfers">
+                      <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+                        <List
+                          bordered
+                          dataSource={transferEvents}
+                          renderItem={item => {
+                            return (
+                              <List.Item key={item[0] + "_" + item[1] + "_" + item.blockNumber + "_" + item[2].toNumber()}>
+                                <span style={{ fontSize: 16, marginRight: 8 }}>#{item[2].toNumber()}</span>
+                                <Address address={item[0]} ensProvider={mainnetProvider} fontSize={16} /> =&gt;
+                                <Address address={item[1]} ensProvider={mainnetProvider} fontSize={16} />
+                              </List.Item>
+                            );
+                          }}
+                        />
+                      </div>
+                    </Route>
 
           <Route path="/view">
               <NFTViewer
