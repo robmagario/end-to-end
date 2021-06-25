@@ -23,7 +23,6 @@ import {
   useOnBlock,
   useUserProvider,
 } from "./hooks";
-//import ReactJson from "react-json-view";
 
 const { BufferList } = require("bl");
 // https://www.npmjs.com/package/ipfs-http-client
@@ -136,6 +135,10 @@ function App(props) {
 
 
 //add
+useOnBlock(mainnetProvider, () => {
+    console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
+  });
+
 const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [address]);
   console.log("🤗 balance:", balance);
 
@@ -153,10 +156,10 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               console.log("GEtting token index", tokenIndex);
               const tokenId = await readContracts.NFTMinter.tokenOfOwnerByIndex(address, tokenIndex);
               console.log("tokenId", tokenId);
-              const metadataURI = await readContracts.NFTMinter.metadataURI(tokenId);
+              const metadataURI = await readContracts.NFTMinter.tokenURI(tokenId);
               console.log("tokenURI", metadataURI);
 
-              const ipfsHash = metadataURI.replace("ipfs://", "");
+              const ipfsHash = metadataURI.replace(/^ipfs:\/\//, "");
               console.log("ipfsHash", ipfsHash);
 
               const jsonManifestBuffer = await getFromIPFS(ipfsHash);
