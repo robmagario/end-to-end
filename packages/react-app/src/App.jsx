@@ -160,6 +160,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               console.log("tokenURI", metadataURI);
 
               const ipfsHash = metadataURI.replace(/^ipfs:\/\//, "");
+              const ipfsURI = metadataURI.replace(/^ipfs:\/\//, "https://dweb.link/ipfs/");
               console.log("ipfsHash", ipfsHash);
 
               const jsonManifestBuffer = await getFromIPFS(ipfsHash);
@@ -365,6 +366,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
                           dataSource={yourCollectibles}
                           renderItem={item => {
                             const id = item.id.toNumber();
+                            item.image = item.image.replace(/^ipfs:\/\//, "https://dweb.link/ipfs/")
                             return (
                               <List.Item key={id + "_" + item.uri + "_" + item.owner}>
                                 <Card
