@@ -7,8 +7,8 @@ export default function Header() {
   return (
     <a href="https://nftschool.dev" target="_blank" rel="noopener noreferrer">
       <PageHeader
-        title="🎟 NFT School e2e example"
-        subTitle="join us at nftschool.dev"
+        title="🎟 TanukiSwap"
+        subTitle="Your place for tokens and NFTs"
         style={{ cursor: "pointer" }}
       />
     </a>
