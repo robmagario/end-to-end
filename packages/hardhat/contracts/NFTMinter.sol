@@ -14,7 +14,7 @@ contract NFTMinter is ERC721 {
     }
 
     function mintToken(address owner, string memory metadataURI)
-    public
+    external payable
     returns (uint256)
     {
         _tokenIds.increment();
