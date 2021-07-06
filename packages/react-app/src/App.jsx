@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useState, Component } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
-import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch, Auction, MyToken } from "./components";
+import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch } from "./components";
 import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
 import {
@@ -366,7 +366,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               NFTMinter Contract
             </Link>
           </Menu.Item>
-          <Menu.Item key="/auction">
+          {/* <Menu.Item key="/auction">
                       <Link
                         onClick={() => {
                           setRoute("/auction");
@@ -386,6 +386,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
                    My Token
                       </Link>
           </Menu.Item>
+              */}
         <Menu.Item key="/subgraph">
                     <Link
                       onClick={() => {
@@ -500,7 +501,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               blockExplorer={blockExplorer}
             />
           </Route>
-
+{/*
           <Route exact path="/auction">
                       <Auction
                       />
@@ -510,6 +511,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
                                 <MyToken
                                 />
                               </Route>
+                              */}
         <Route path="/subgraph">
                     <Subgraph
                       subgraphUri={props.subgraphUri}
