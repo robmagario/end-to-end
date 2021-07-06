@@ -5,11 +5,11 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
 import "antd/dist/antd.css";
 import { useUserAddress } from "eth-hooks";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, Component } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
-import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch } from "./components";
+import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Minter, NFTViewer, Ramp, ThemeSwitch, Auction, MyToken } from "./components";
 import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
 import {
@@ -23,6 +23,16 @@ import {
   useOnBlock,
   useUserProvider,
 } from "./hooks";
+import ApolloClient, { gql, InMemoryCache } from 'apollo-boost';
+import { ApolloProvider, Query } from 'react-apollo';
+import { ExampleUI, Hints, Subgraph, DexSubgraphExplorer } from "./views";
+
+
+const client = new ApolloClient({
+  uri: process.env.REACT_APP_GRAPHQL_ENDPOINT,
+  cache: new InMemoryCache(),
+})
+
 
 const { BufferList } = require("bl");
 // https://www.npmjs.com/package/ipfs-http-client
@@ -159,7 +169,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               const metadataURI = await readContracts.NFTMinter.tokenURI(tokenId);
               console.log("tokenURI", metadataURI);
 
-              const ipfsHash = metadataURI.replace(/^ipfs:\/\//, "");
+              const ipfsHash = metadataURI.replace("ipfs://", "");
               const ipfsURI = metadataURI.replace(/^ipfs:\/\//, "https://dweb.link/ipfs/");
               console.log("ipfsHash", ipfsHash);
 
@@ -356,11 +366,41 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               NFTMinter Contract
             </Link>
           </Menu.Item>
-        </Menu>
+          <Menu.Item key="/auction">
+                      <Link
+                        onClick={() => {
+                          setRoute("/auction");
+                        }}
+                        to="/auction"
+                      >
+                        Auction
+                      </Link>
+                    </Menu.Item>
+          <Menu.Item key="/mytoken">
+              <Link
+                 onClick={() => {
+                 setRoute("/mytoken");
+                  }}
+                  to="/mytoken"
+                   >
+                   My Token
+                      </Link>
+          </Menu.Item>
+        <Menu.Item key="/subgraph">
+                    <Link
+                      onClick={() => {
+                        setRoute("/subgraph");
+                      }}
+                      to="/subgraph"
+                    >
+                      Subgraph
+                    </Link>
+                  </Menu.Item>
+                </Menu>
 
         <Switch>
           <Route exact path="/">
-          <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+          <div style={{ width: 1280, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
                         <List
                           bordered
                           dataSource={yourCollectibles}
@@ -377,7 +417,7 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
                                   }
                                 >
                                   <div>
-                                    <img src={item.image} style={{ maxWidth: 150 }} />
+                                    <img src={item.image} style={{ maxWidth: 300 }} />
                                   </div>
                                   <div>{item.description}</div>
                                 </Card>
@@ -460,6 +500,26 @@ const balance = useContractReader(readContracts, "NFTMinter", "balanceOf", [addr
               blockExplorer={blockExplorer}
             />
           </Route>
+
+          <Route exact path="/auction">
+                      <Auction
+                      />
+                    </Route>
+
+          <Route exact path="/mytoken">
+                                <MyToken
+                                />
+                              </Route>
+        <Route path="/subgraph">
+                    <Subgraph
+                      subgraphUri={props.subgraphUri}
+                      tx={tx}
+                      writeContracts={writeContracts}
+                      mainnetProvider={mainnetProvider}
+                    />
+
+                  </Route>
+
         </Switch>
       </BrowserRouter>
 
